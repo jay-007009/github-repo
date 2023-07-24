@@ -1,0 +1,123 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09T00:00:00.000Z",
+    "Resources": {
+       "CodeBuildServiceRole": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+             "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17T00:00:00.000Z",
+                "Statement": [
+                   {
+                      "Effect": "Allow",
+                      "Principal": {
+                         "Service": "codebuild.amazonaws.com"
+                      },
+                      "Action": "sts:AssumeRole"
+                   }
+                ]
+             },
+             "Policies": [
+                {
+                   "PolicyName": "root",
+                   "PolicyDocument": {
+                      "Version": "2012-10-17T00:00:00.000Z",
+                      "Statement": [
+                         {
+                            "Sid": "CloudWatchLogsPolicy",
+                            "Effect": "Allow",
+                            "Action": [
+                               "logs:CreateLogGroup",
+                               "logs:CreateLogStream",
+                               "logs:PutLogEvents"
+                            ],
+                            "Resource": [
+                               "*"
+                            ]
+                         },
+                         {
+                            "Sid": "S3GetObjectPolicy",
+                            "Effect": "Allow",
+                            "Action": [
+                               "s3:GetObject",
+                               "s3:GetObjectVersion"
+                            ],
+                            "Resource": [
+                               "*"
+                            ]
+                         },
+                         {
+                            "Sid": "S3PutObjectPolicy",
+                            "Effect": "Allow",
+                            "Action": [
+                               "s3:PutObject"
+                            ],
+                            "Resource": [
+                               "*"
+                            ]
+                         },
+                         {
+                            "Sid": "S3BucketIdentity",
+                            "Effect": "Allow",
+                            "Action": [
+                               "s3:GetBucketAcl",
+                               "s3:GetBucketLocation"
+                            ],
+                            "Resource": [
+                               "*"
+                            ]
+                         }
+                      ]
+                   }
+                }
+             ]
+          }
+       },
+       "CodeBuildSourceCredential": {
+          "Type": "AWS::CodeBuild::SourceCredential",
+          "Properties": {
+             "AuthType": "PERSONAL_ACCESS_TOKEN",
+             "ServerType": "GITHUB",
+             "Token": "{{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}"
+          }
+       },
+       "CodeBuilProject": {
+          "Type": "AWS::CodeBuild::Project",
+          "Properties": {
+             "Name": null,
+             "ServiceRole": null,
+             "Source": {
+                "Type": "GITHUB",
+                "Location": "https://github.com/jay-007009/github-repo.git",
+                "BuildSpec": "buildspec.json",
+                "Auth": {
+                   "Type": "OAUTH",
+                   "Resource": null
+                }
+             },
+             "Artifacts": {
+                "Type": "NO_ARTIFACTS"
+             },
+             "Triggers": {
+                "Webhook": true,
+                "FilterGroups": [
+                   [
+                      {
+                         "Type": "EVENT",
+                         "Pattern": "PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED"
+                      },
+                      {
+                         "Type": "BASE_REF",
+                         "Pattern": null
+                      }
+                   ]
+                ]
+             },
+             "Environment": {
+                "Type": "LINUX_CONTAINER",
+                "ComputeType": "BUILD_GENERAL1_SMALL",
+                "Image": "aws/codebuild/standard:5.0"
+             }
+          }
+       }
+    }
+ }
