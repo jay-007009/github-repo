@@ -1,5 +1,25 @@
 {
    "AWSTemplateFormatVersion": "2010-09-09",
+   "Description": "CI/CD pipeline for GitHub projects",
+      "Parameters": {
+         "GitHubOwner": {
+            "Type": "String",
+            "AllowedPattern": "[A-Za-z0-9-]+",
+            "Default": "jay-007009"
+         },
+         "GitHubRepository": {
+            "Type": "String",
+            "AllowedPattern": "[A-Za-z0-9-]+"
+         },
+         "GitHubBranch": {
+            "Type": "String",
+            "AllowedPattern": "[A-Za-z0-9-]+",
+            "Default": "jay"
+         }
+      },
+   
+
+
    "Resources": {
        "CodeBuildServiceRole": {
            "Type": "AWS::IAM::Role",
@@ -85,15 +105,16 @@
                        "Arn"
                    ]
                },
-               "Source": {
-                   "Type": "GITHUB",
-                   "Location": "https://github.com/jay-007009/github-repo.git",
-                   "BuildSpec": "buildspec.json",
-                   "Auth": {
-                       "Type": "OAUTH"
-                      
-                   }
-               },
+               
+                  "Source": {
+                     "Type": "GITHUB",
+                     "Location": {"Fn::Ref":"https://github.com/{GitHubOwner}/{GitHubRepository}.git" } ,
+                     "BuildSpec": "buildspec.json",
+                     "Auth": {
+                        "Type": "OAUTH"
+                     }
+                  },
+               
                "Artifacts": {
                    "Type": "NO_ARTIFACTS"
                },
@@ -103,12 +124,12 @@
                        [
                            {
                                "Type": "EVENT",
-                               "Pattern": "PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED"
+                               "Pattern": "PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED "
                            },
                            {
                                "Type": "BASE_REF",
                                "Pattern": {
-                                   "Fn::Sub": "^refs/heads/jay$"
+                                   "Fn::Sub": "^refs/heads/{GitHubBranch}$"
                                }
                            }
                        ]
