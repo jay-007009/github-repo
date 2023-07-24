@@ -108,7 +108,7 @@
                
                   "Source": {
                      "Type": "GITHUB",
-                     "Location": {"Fn::Ref":"https://github.com/{GitHubOwner}/{GitHubRepository}.git" } ,
+                     "Location": {"Fn::Ref":["https://github.com/{GitHubOwner}/{GitHubRepository}.git"]} ,
                      "BuildSpec": "buildspec.json",
                      "Auth": {
                         "Type": "OAUTH"

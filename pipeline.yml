@@ -1,4 +1,20 @@
 AWSTemplateFormatVersion: 2010-09-09
+Description: CI/CD pipeline 
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    AllowedPattern: "[A-Za-z0-9-]+"
+    Default: jay-007009
+
+  GitHubRepository:
+    Type: String
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  GitHubBranch:
+    Type: String
+    AllowedPattern: "[A-Za-z0-9-]+"
+    Default: jay
 Resources:
   CodeBuildServiceRole:
     Type: "AWS::IAM::Role"
@@ -43,12 +59,7 @@ Resources:
                   - "s3:GetBucketLocation"
                 Resource:
                   - "*"
-  CodeBuildSourceCredential:
-    Type: "AWS::CodeBuild::SourceCredential"
-    Properties:
-      AuthType: PERSONAL_ACCESS_TOKEN
-      ServerType: GITHUB
-      Token: "{{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}"
+ 
   CodeBuilProject:
     Type: "AWS::CodeBuild::Project"
     Properties:
@@ -56,20 +67,20 @@ Resources:
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Source:
         Type: GITHUB
-        Location: "https://github.com/jay-007009/github-repo.git"
-        BuildSpec: buildspec.yml
+        Location: !Sub 'https://github.com/${GitHubOwner}/${GitHubRepository}.git'
+        BuildSpec: buildspec.json
         Auth:
           Type: OAUTH
-          Resource: !Ref CodeBuildSourceCredential
+         
       Artifacts:
         Type: NO_ARTIFACTS
       Triggers:
         Webhook: true
         FilterGroups:
           - - Type: EVENT
-              Pattern: "PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED"
+              Pattern: "PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED"
             - Type: BASE_REF
-              Pattern: !Sub ^refs/heads/jay$
+              Pattern: !Sub ^refs/heads/${GitHubBranch}$
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
